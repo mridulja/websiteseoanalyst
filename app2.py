@@ -7,13 +7,167 @@ import requests
 import time
 import json
 
+# Must be the first Streamlit command
+st.set_page_config(
+    page_title="Website SEO Analyzer",
+    page_icon="🔍",
+    layout="wide"
+)
+
+# Hide the CSS code from showing up
+st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        
+        /* Hide default elements */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        .stDeployButton {display: none;}
+        header {visibility: hidden;}
+        
+        /* Main app styling */
+        .stApp {
+            background: linear-gradient(120deg, #6B5B95 0%, #45B7D1 100%);
+        }
+        
+        /* Dark grey sidebar */
+        [data-testid="stSidebar"] {
+            background-color: rgba(51, 51, 51, 0.95) !important;
+            backdrop-filter: blur(10px);
+            padding: 2rem 1rem;
+        }
+        
+        /* Input box styling with better contrast */
+        .stTextInput > div > div > input {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
+            padding: 0.75rem 1rem !important;
+            color: white !important;
+            border-radius: 8px !important;
+            font-size: 1.1rem !important;
+            font-family: 'Inter', sans-serif !important;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .stTextInput > div > div > input:focus {
+            border-color: rgba(255, 255, 255, 0.5) !important;
+            background: rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+        }
+        
+        .stTextInput > div > div > input::placeholder {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+        
+        /* Download button styling with better contrast */
+        .stDownloadButton > button {
+            background: linear-gradient(90deg, #45B7D1 0%, #6B5B95 100%) !important;
+            color: white !important;
+            border: none !important;
+            padding: 0.75rem 2rem !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-size: 1rem !important;
+            font-family: 'Inter', sans-serif !important;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-top: 1rem !important;
+        }
+        
+        .stDownloadButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(90deg, #3DA1B8 0%, #5A4C7E 100%) !important;
+        }
+        
+        /* Analysis button styling */
+        .stButton > button {
+            background: linear-gradient(90deg, #6B5B95 0%, #45B7D1 100%) !important;
+            color: white !important;
+            border: none !important;
+            padding: 0.75rem 2rem !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-size: 1.1rem !important;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: auto !important;
+            min-width: 200px;
+        }
+        
+        .stButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            background: linear-gradient(90deg, #5A4C7E 0%, #3DA1B8 100%) !important;
+        }
+        
+        /* Expander styling with better contrast */
+        .streamlit-expanderHeader {
+            background: rgba(255, 255, 255, 0.15) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            color: white !important;
+            border-radius: 8px !important;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Results container styling */
+        .stExpander {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            padding: 1rem !important;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Typography */
+        h1, h2, h3, p, li, label {
+            color: white !important;
+        }
+        
+        /* Remove empty spaces */
+        .css-1544g2n {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .css-1y4p8pa {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        /* Main title styling */
+        h1:first-of-type {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        /* Subtitle styling */
+        h3:first-of-type {
+            margin-bottom: 2rem !important;
+            opacity: 0.9;
+        }
+        
+        /* Add spacing between elements */
+        .stTextInput {
+            margin-bottom: 2rem !important;
+        }
+        
+        /* Help text styling */
+        .stTextInput > div > small {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-size: 0.9rem !important;
+            margin-top: 0.5rem !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # Load environment variables
 load_dotenv()
 
 # Constants
 OLLAMA_API = "http://localhost:11434/api/generate"
 OLLAMA_HEADERS = {"Content-Type": "application/json"}
-OLLAMA_MODEL = "llama3.2:latest"  # Changed from llama2:latest
+OLLAMA_MODEL = "llama3.2:latest"
 WEB_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
 }
@@ -158,13 +312,6 @@ def render_api_selection():
     st.session_state.api_source = api_source
 
 def main():
-    # Page configuration
-    st.set_page_config(
-        page_title="Website SEO Analyzer",
-        page_icon="🔍",
-        layout="wide"
-    )
-
     # Initialize session state
     init_session_state()
     
@@ -182,7 +329,7 @@ def main():
         help="Enter the full URL including https:// or http://"
     )
     
-    col1, col2, col3 = st.columns([1, 1, 1])
+    col1, col2, col3 = st.columns([2, 1, 2])
     with col2:
         analyze_button = st.button("🚀 Analyze Website", use_container_width=True)
 
@@ -222,17 +369,17 @@ def main():
             st.error(f"❌ Error: {str(e)}")
             st.info("💡 Please check the URL and try again.")
     
-    # Footer
-    st.markdown("---")
-    st.markdown("### How it works")
-    st.markdown("""
-    1. Select your preferred AI provider (OpenAI or Ollama)
-    2. Configure API access
-    3. Enter your website URL
-    4. Click 'Analyze Website'
-    5. Get detailed SEO analysis
-    6. Download the report
-    """)
+    # Footer - only show if no analysis is being displayed
+    if not analyze_button or not url:
+        st.markdown("### How it works")
+        st.markdown("""
+        1. Select your preferred AI provider (OpenAI or Ollama)
+        2. Configure API access
+        3. Enter your website URL
+        4. Click 'Analyze Website'
+        5. Get detailed SEO analysis
+        6. Download the report
+        """)
 
 if __name__ == "__main__":
     main() 
